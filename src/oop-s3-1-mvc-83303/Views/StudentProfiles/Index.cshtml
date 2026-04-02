@@ -1,0 +1,13 @@
+@model IEnumerable<oop_s3_1_mvc_83303.Models.StudentProfile>
+@{ ViewData["Title"] = "Students"; }
+<h1>Student Profiles</h1>
+@if (User.IsInRole("Admin")) { <p><a asp-action="Create" class="btn btn-primary">Create New</a></p> }
+<table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Student Number</th><th>Actions</th></tr></thead>
+    <tbody>
+    @foreach (var item in Model) {
+        <tr><td>@item.Name</td><td>@item.Email</td><td>@item.StudentNumber</td>
+            <td><a asp-action="Details" asp-route-id="@item.Id">Details</a></td></tr>
+    }
+    </tbody>
+</table>
