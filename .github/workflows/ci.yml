@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "master" ]
 
+# Autorisations nécessaires pour déployer sur GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -25,7 +31,34 @@ jobs:
       - name: Build (Release)
         run: dotnet build --configuration Release --no-restore
 
-      - name: Test
-        # On repasse sur un test standard pour éviter les erreurs de logger
-        # Les résultats détaillés s'afficheront dans la console de l'Action
-        run: dotnet test --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      - name: Test & Collect Coverage
+        # On collecte la couverture et on utilise le logger pour le résumé
+        run: dotnet test --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Generate HTML Report
+        # Transforme les fichiers XML de couverture en un site web HTML
+        run: reportgenerator -reports:./TestResults/**/coverage.cobertura.xml -targetdir:./coveragereport -reporttypes:Html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        # Télécharge le dossier du rapport HTML pour Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './coveragereport'
+
+  deploy:
+    # Ce job s'exécute après le build et déploie le site
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
