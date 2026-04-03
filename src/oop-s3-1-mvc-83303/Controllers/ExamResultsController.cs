@@ -39,6 +39,33 @@ namespace oop_s3_1_mvc_83303.Controllers
             }
         }
 
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var examResult = await _context.ExamResults
+                .Include(e => e.Exam)
+                .Include(e => e.Student)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (examResult == null) return NotFound();
+
+            if (IsStudent)
+            {
+                var studentId = await GetStudentProfileId();
+                if (examResult.StudentProfileId != studentId) return Forbid();
+                if (!examResult.Exam!.ResultsReleased) return Forbid(); // Strict Rule
+            }
+            else if (IsFaculty)
+            {
+                var facultyId = await GetFacultyProfileId();
+                var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == examResult.Exam!.CourseId);
+                if (course?.FacultyProfileId != facultyId) return Forbid();
+            }
+
+            return View(examResult);
+        }
+
         [Authorize(Roles = "Admin,Faculty")]
         public async Task<IActionResult> Create()
         {

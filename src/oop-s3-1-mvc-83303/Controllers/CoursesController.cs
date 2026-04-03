@@ -7,7 +7,7 @@ using oop_s3_1_mvc_83303.Models;
 
 namespace oop_s3_1_mvc_83303.Controllers
 {
-    [Authorize(Roles = "Admin,Faculty")]
+    [Authorize(Roles = "Admin,Faculty,Student")]
     public class CoursesController : BaseController
     {
         public CoursesController(ApplicationDbContext context, UserManager<IdentityUser> userManager) : base(context, userManager) { }
@@ -17,8 +17,50 @@ namespace oop_s3_1_mvc_83303.Controllers
             if (IsAdmin)
                 return View(await _context.Courses.Include(c => c.Branch).Include(c => c.Faculty).ToListAsync());
             
-            var facultyId = await GetFacultyProfileId();
-            return View(await _context.Courses.Include(c => c.Branch).Where(c => c.FacultyProfileId == facultyId).ToListAsync());
+            if (IsFaculty)
+            {
+                var facultyId = await GetFacultyProfileId();
+                return View(await _context.Courses.Include(c => c.Branch).Where(c => c.FacultyProfileId == facultyId).ToListAsync());
+            }
+
+            // Student
+            var studentId = await GetStudentProfileId();
+            var courses = await _context.CourseEnrolments
+                .Include(e => e.Course).ThenInclude(c => c.Branch)
+                .Include(e => e.Course).ThenInclude(c => c.Faculty)
+                .Where(e => e.StudentProfileId == studentId)
+                .Select(e => e.Course)
+                .ToListAsync();
+
+            return View(courses);
+        }
+
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var course = await _context.Courses
+                .Include(c => c.Branch)
+                .Include(c => c.Faculty)
+                .Include(c => c.Enrolments).ThenInclude(e => e.Student)
+                .Include(c => c.Exams)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (course == null) return NotFound();
+
+            if (IsStudent)
+            {
+                var studentId = await GetStudentProfileId();
+                var isEnrolled = await _context.CourseEnrolments.AnyAsync(e => e.CourseId == id && e.StudentProfileId == studentId);
+                if (!isEnrolled) return Forbid();
+            }
+            else if (IsFaculty)
+            {
+                var facultyId = await GetFacultyProfileId();
+                if (course.FacultyProfileId != facultyId) return Forbid();
+            }
+
+            return View(course);
         }
 
         [Authorize(Roles = "Admin")]

@@ -1,0 +1,84 @@
+@model oop_s3_1_mvc_83303.Models.Course
+@inject GradebookService GradeService
+@{ ViewData["Title"] = "Gradebook"; }
+
+<h1>Gradebook: @Model.Name</h1>
+
+<h3>Academic Summary</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr class="table-primary">
+            <th>Student</th>
+            <th>Assignments Average</th>
+            <th>Exams Average</th>
+            <th>Overall Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var enr in Model.Enrolments)
+        {
+            var assignmentScores = Model.Assignments
+                .SelectMany(a => a.Results)
+                .Where(r => r.StudentProfileId == enr.StudentProfileId)
+                .Select(r => r.Score);
+
+            var examScores = Model.Exams
+                .SelectMany(e => e.Results)
+                .Where(r => r.StudentProfileId == enr.StudentProfileId)
+                .Select(r => r.Score);
+
+            var assAvg = GradeService.CalculateAverage(assignmentScores);
+            var exAvg = GradeService.CalculateAverage(examScores);
+            var overallAvg = GradeService.CalculateAverage(assignmentScores.Concat(examScores));
+
+            <tr>
+                <td>@enr.Student?.Name</td>
+                <td>@assAvg.ToString("F2")</td>
+                <td>@exAvg.ToString("F2")</td>
+                <td><strong>@GradeService.GetGrade(overallAvg, 100)</strong></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3>Assignments</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Student</th>
+            @foreach(var ass in Model.Assignments) { <th>@ass.Title (@ass.MaxScore)</th> }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var enr in Model.Enrolments) {
+            <tr>
+                <td>@enr.Student?.Name</td>
+                @foreach(var ass in Model.Assignments) {
+                    var res = ass.Results.FirstOrDefault(r => r.StudentProfileId == enr.StudentProfileId);
+                    <td>@(res?.Score.ToString() ?? "-")</td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3>Exams</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Student</th>
+            @foreach(var ex in Model.Exams) { <th>@ex.Title (@(ex.ResultsReleased ? "Released" : "Provisional"))</th> }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var enr in Model.Enrolments) {
+            <tr>
+                <td>@enr.Student?.Name</td>
+                @foreach(var ex in Model.Exams) {
+                    var res = ex.Results.FirstOrDefault(r => r.StudentProfileId == enr.StudentProfileId);
+                    <td>@(res?.Score.ToString() ?? "-") (@(res?.Grade ?? ""))</td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>

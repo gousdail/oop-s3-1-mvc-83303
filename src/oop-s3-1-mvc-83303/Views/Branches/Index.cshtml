@@ -1,0 +1,25 @@
+@model IEnumerable<oop_s3_1_mvc_83303.Models.Branch>
+@{ ViewData["Title"] = "Branches"; }
+
+<h1>Branches</h1>
+@if (User.IsInRole("Admin"))
+{
+    <p><a asp-action="Create" class="btn btn-primary">Add New Branch</a></p>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Address</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.Name</td>
+            <td>@item.Address</td>
+        </tr>
+}
+    </tbody>
+</table>

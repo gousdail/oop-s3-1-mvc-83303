@@ -52,33 +52,29 @@ namespace oop_s3_1_mvc_83303.Tests
         }
 
         [Fact]
-        public async Task Database_CanAddBranch()
+        public void CanFacultyAccessCourse_Owner_ReturnsTrue()
         {
-            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_Branch")
-                .Options;
-
-            using (var context = new ApplicationDbContext(options))
-            {
-                context.Branches.Add(new Branch { Name = "Test Branch", Address = "Test Addr" });
-                await context.SaveChangesAsync();
-                Assert.Equal(1, await context.Branches.CountAsync());
-            }
+            var course = new Course { FacultyProfileId = 1 };
+            Assert.True(_service.CanFacultyAccessCourse(1, course));
         }
 
         [Fact]
-        public async Task Database_CanAddStudentProfile()
+        public void CanFacultyAccessCourse_NotOwner_ReturnsFalse()
         {
-            var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_Student")
-                .Options;
+            var course = new Course { FacultyProfileId = 2 };
+            Assert.False(_service.CanFacultyAccessCourse(1, course));
+        }
 
-            using (var context = new ApplicationDbContext(options))
-            {
-                context.StudentProfiles.Add(new StudentProfile { Name = "Test Student", StudentNumber = "S123" });
-                await context.SaveChangesAsync();
-                Assert.Equal(1, await context.StudentProfiles.CountAsync());
-            }
+        [Fact]
+        public void GetGrade_Exactly50_ReturnsC()
+        {
+            Assert.Equal("C", _service.GetGrade(50, 100));
+        }
+
+        [Fact]
+        public void GetGrade_Exactly60_ReturnsB()
+        {
+            Assert.Equal("B", _service.GetGrade(60, 100));
         }
     }
 }

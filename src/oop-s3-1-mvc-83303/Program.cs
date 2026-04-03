@@ -20,6 +20,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => {
 })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddScoped<oop_s3_1_mvc_83303.Services.GradebookService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

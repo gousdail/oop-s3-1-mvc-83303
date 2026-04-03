@@ -24,5 +24,10 @@ namespace oop_s3_1_mvc_83303.Services
             if (percentage >= 40) return "D";
             return "F";
         }
+
+        public bool CanFacultyAccessCourse(int facultyId, Course course)
+        {
+            return course.FacultyProfileId == facultyId;
+        }
     }
 }

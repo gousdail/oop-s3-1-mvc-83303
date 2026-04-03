@@ -1,0 +1,25 @@
+@model IEnumerable<oop_s3_1_mvc_83303.Models.ExamResult>
+@{ ViewData["Title"] = "Exam Results"; }
+
+<h1>My Exam Results</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Exam</th>
+            <th>Date</th>
+            <th>Score</th>
+            <th>Grade</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.Exam?.Title</td>
+            <td>@item.Exam?.Date.ToShortDateString()</td>
+            <td>@item.Score / @item.Exam?.MaxScore</td>
+            <td><strong>@item.Grade</strong></td>
+        </tr>
+}
+    </tbody>
+</table>

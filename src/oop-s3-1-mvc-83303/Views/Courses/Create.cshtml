@@ -1,0 +1,45 @@
+@model oop_s3_1_mvc_83303.Models.Course
+@{ ViewData["Title"] = "Create Course"; }
+
+<h1>Create Course</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="BranchId" class="form-label">Branch</label>
+                <select asp-for="BranchId" class="form-control" asp-items="@(new SelectList(ViewBag.Branches, "Id", "Name"))"></select>
+                <span asp-validation-for="BranchId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="FacultyProfileId" class="form-label">Faculty</label>
+                <select asp-for="FacultyProfileId" class="form-control" asp-items="@(new SelectList(ViewBag.Faculties, "Id", "Name"))">
+                    <option value="">-- Select Faculty --</option>
+                </select>
+                <span asp-validation-for="FacultyProfileId" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="StartDate" class="form-label"></label>
+                <input asp-for="StartDate" class="form-control" type="date" />
+                <span asp-validation-for="StartDate" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="EndDate" class="form-label"></label>
+                <input asp-for="EndDate" class="form-control" type="date" />
+                <span asp-validation-for="EndDate" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

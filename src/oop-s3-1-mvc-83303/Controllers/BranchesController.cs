@@ -7,16 +7,18 @@ using oop_s3_1_mvc_83303.Models;
 
 namespace oop_s3_1_mvc_83303.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Faculty,Student")]
     public class BranchesController : BaseController
     {
         public BranchesController(ApplicationDbContext context, UserManager<IdentityUser> userManager) : base(context, userManager) { }
 
         public async Task<IActionResult> Index() => View(await _context.Branches.ToListAsync());
 
+        [Authorize(Roles = "Admin")]
         public IActionResult Create() => View();
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Branch branch)
         {

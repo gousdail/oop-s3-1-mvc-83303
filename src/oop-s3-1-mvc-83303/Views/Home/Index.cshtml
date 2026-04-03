@@ -1,8 +1,50 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome to Acme Global College</h1>
+    <p>Multi-Branch Student & Course Management System.</p>
+</div>
+
+<hr />
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card shadow">
+            <div class="card-body">
+                <h5 class="card-title">Test Credentials (RBAC Demo)</h5>
+                <p class="card-text">Please login to access the management features.</p>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Admin</td>
+                            <td><code>admin@college.com</code></td>
+                            <td><code>Admin123!</code></td>
+                        </tr>
+                        <tr>
+                            <td>Faculty</td>
+                            <td><code>faculty@college.com</code></td>
+                            <td><code>Faculty123!</code></td>
+                        </tr>
+                        <tr>
+                            <td>Student</td>
+                            <td><code>student1@college.com</code></td>
+                            <td><code>Student123!</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="alert alert-info">
+                    <strong>Note:</strong> Once logged in, the navigation menu will show the options (Courses, Students, etc.) according to your role.
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
