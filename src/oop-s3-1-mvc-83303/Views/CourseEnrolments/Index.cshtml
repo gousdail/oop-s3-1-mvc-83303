@@ -1,0 +1,29 @@
+@model IEnumerable<oop_s3_1_mvc_83303.Models.CourseEnrolment>
+@{ ViewData["Title"] = "Enrolments"; }
+
+<h1>Course Enrolments</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">New Enrolment</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Course</th>
+            <th>Enrol Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.Student?.Name</td>
+            <td>@item.Course?.Name</td>
+            <td>@item.EnrolDate.ToShortDateString()</td>
+            <td>@item.Status</td>
+        </tr>
+}
+    </tbody>
+</table>

@@ -25,7 +25,7 @@ namespace oop_s3_1_mvc_83303.Controllers
                 return View(await _context.ExamResults
                     .Include(er => er.Exam)
                     .Include(er => er.Student)
-                    .Where(er => er.Exam!.Course!.FacultyProfileId == facultyId)
+                    .Where(er => er.Exam != null && er.Exam.Course != null && er.Exam.Course.FacultyProfileId == facultyId)
                     .ToListAsync());
             }
             else // Student
@@ -34,7 +34,7 @@ namespace oop_s3_1_mvc_83303.Controllers
                 // Critical Rule: Student must NOT see provisional results (ResultsReleased == false)
                 return View(await _context.ExamResults
                     .Include(er => er.Exam)
-                    .Where(er => er.StudentProfileId == studentId && er.Exam!.ResultsReleased == true)
+                    .Where(er => er.StudentProfileId == studentId && er.Exam != null && er.Exam.ResultsReleased == true)
                     .ToListAsync());
             }
         }
@@ -54,12 +54,13 @@ namespace oop_s3_1_mvc_83303.Controllers
             {
                 var studentId = await GetStudentProfileId();
                 if (examResult.StudentProfileId != studentId) return Forbid();
-                if (!examResult.Exam!.ResultsReleased) return Forbid(); // Strict Rule
+                if (examResult.Exam == null || !examResult.Exam.ResultsReleased) return Forbid(); // Strict Rule
             }
             else if (IsFaculty)
             {
                 var facultyId = await GetFacultyProfileId();
-                var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == examResult.Exam!.CourseId);
+                if (examResult.Exam == null) return NotFound();
+                var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == examResult.Exam.CourseId);
                 if (course?.FacultyProfileId != facultyId) return Forbid();
             }
 

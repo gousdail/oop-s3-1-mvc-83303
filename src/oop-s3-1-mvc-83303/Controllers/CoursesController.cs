@@ -26,10 +26,10 @@ namespace oop_s3_1_mvc_83303.Controllers
             // Student
             var studentId = await GetStudentProfileId();
             var courses = await _context.CourseEnrolments
-                .Include(e => e.Course).ThenInclude(c => c.Branch)
-                .Include(e => e.Course).ThenInclude(c => c.Faculty)
-                .Where(e => e.StudentProfileId == studentId)
-                .Select(e => e.Course)
+                .Include(e => e.Course).ThenInclude(c => c!.Branch)
+                .Include(e => e.Course).ThenInclude(c => c!.Faculty)
+                .Where(e => e.StudentProfileId == studentId && e.Course != null)
+                .Select(e => e.Course!)
                 .ToListAsync();
 
             return View(courses);
@@ -42,7 +42,7 @@ namespace oop_s3_1_mvc_83303.Controllers
             var course = await _context.Courses
                 .Include(c => c.Branch)
                 .Include(c => c.Faculty)
-                .Include(c => c.Enrolments).ThenInclude(e => e.Student)
+                .Include(c => c.Enrolments).ThenInclude(e => e!.Student)
                 .Include(c => c.Exams)
                 .FirstOrDefaultAsync(m => m.Id == id);
 

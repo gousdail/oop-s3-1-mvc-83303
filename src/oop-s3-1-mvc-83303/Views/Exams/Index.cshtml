@@ -1,0 +1,45 @@
+@model IEnumerable<oop_s3_1_mvc_83303.Models.Exam>
+@{ ViewData["Title"] = "Exams"; }
+
+<h1>Exams Management</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Course</th>
+            <th>Title</th>
+            <th>Date</th>
+            <th>Max Score</th>
+            <th>Results Released?</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>@item.Course?.Name</td>
+            <td>@item.Title</td>
+            <td>@item.Date.ToShortDateString()</td>
+            <td>@item.MaxScore</td>
+            <td>
+                @if (item.ResultsReleased)
+                {
+                    <span class="badge bg-success">Released</span>
+                }
+                else
+                {
+                    <span class="badge bg-warning">Provisional</span>
+                }
+            </td>
+            <td>
+                @if (User.IsInRole("Admin"))
+                {
+                    <form asp-action="ToggleRelease" asp-route-id="@item.Id" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Toggle Release</button>
+                    </form>
+                }
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

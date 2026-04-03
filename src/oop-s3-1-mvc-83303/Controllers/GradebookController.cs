@@ -16,8 +16,8 @@ namespace oop_s3_1_mvc_83303.Controllers
         {
             var course = await _context.Courses
                 .Include(c => c.Assignments).ThenInclude(a => a.Results)
-                .Include(c => c.Exams).ThenInclude(e => e.Results)
-                .Include(c => c.Enrolments).ThenInclude(en => en.Student)
+                .Include(c => c.Exams).ThenInclude(e => e!.Results)
+                .Include(c => c.Enrolments).ThenInclude(en => en!.Student)
                 .FirstOrDefaultAsync(c => c.Id == courseId);
 
             if (course == null) return NotFound();

@@ -26,5 +26,9 @@ namespace oop_s3_1_mvc_83303.Models
         public string StudentNumber { get; set; } = string.Empty;
 
         public virtual ICollection<CourseEnrolment> Enrolments { get; set; } = new List<CourseEnrolment>();
+
+        public virtual ICollection<ExamResult> ExamResults { get; set; } = new List<ExamResult>();
+
+        public virtual ICollection<AssignmentResult> AssignmentResults { get; set; } = new List<AssignmentResult>();
     }
 }

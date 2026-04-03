@@ -23,8 +23,8 @@ namespace oop_s3_1_mvc_83303.Controllers
             {
                 var facultyId = await GetFacultyProfileId();
                 var students = await _context.CourseEnrolments
-                    .Where(e => e.Course!.FacultyProfileId == facultyId)
-                    .Select(e => e.Student)
+                    .Where(e => e.Course != null && e.Course.FacultyProfileId == facultyId && e.Student != null)
+                    .Select(e => e.Student!)
                     .Distinct()
                     .ToListAsync();
                 return View(students);
@@ -56,7 +56,7 @@ namespace oop_s3_1_mvc_83303.Controllers
             {
                 var facultyId = await GetFacultyProfileId();
                 var isAuthorized = await _context.CourseEnrolments
-                    .AnyAsync(e => e.StudentProfileId == id && e.Course!.FacultyProfileId == facultyId);
+                    .AnyAsync(e => e.StudentProfileId == id && e.Course != null && e.Course.FacultyProfileId == facultyId);
                 if (!isAuthorized) return Forbid();
             }
 

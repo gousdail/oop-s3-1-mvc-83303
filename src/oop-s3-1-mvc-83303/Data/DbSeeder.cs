@@ -83,10 +83,90 @@ namespace oop_s3_1_mvc_83303.Data
                     Name = "Modern Programming", 
                     BranchId = branch.Id, 
                     FacultyProfileId = faculty.Id,
-                    StartDate = DateTime.Now,
-                    EndDate = DateTime.Now.AddMonths(4)
+                    StartDate = DateTime.Now.AddMonths(-1),
+                    EndDate = DateTime.Now.AddMonths(3)
                 };
                 context.Courses.Add(course);
+                await context.SaveChangesAsync();
+
+                // Seed Enrolments
+                var students = context.StudentProfiles.ToList();
+                var enrolments = new List<CourseEnrolment>();
+                foreach (var student in students)
+                {
+                    var enrolment = new CourseEnrolment
+                    {
+                        CourseId = course.Id,
+                        StudentProfileId = student.Id,
+                        EnrolDate = DateTime.Now.AddMonths(-1),
+                        Status = "Active"
+                    };
+                    enrolments.Add(enrolment);
+                    context.CourseEnrolments.Add(enrolment);
+                }
+                await context.SaveChangesAsync();
+
+                // Seed Attendance for 4 weeks
+                foreach (var enrolment in enrolments)
+                {
+                    for (int w = 1; w <= 4; w++)
+                    {
+                        context.AttendanceRecords.Add(new AttendanceRecord
+                        {
+                            CourseEnrolmentId = enrolment.Id,
+                            WeekNumber = w,
+                            Date = DateTime.Now.AddDays(-7 * (4 - w)),
+                            IsPresent = (w % 4 != 0) // Present for weeks 1,2,3, absent for week 4
+                        });
+                    }
+                }
+
+                // Seed an Exam
+                var exam = new Exam
+                {
+                    CourseId = course.Id,
+                    Title = "Midterm Exam",
+                    Date = DateTime.Now.AddDays(-5),
+                    MaxScore = 100,
+                    ResultsReleased = true
+                };
+                context.Exams.Add(exam);
+                await context.SaveChangesAsync();
+
+                // Seed Exam Results
+                foreach (var enrolment in enrolments)
+                {
+                    context.ExamResults.Add(new ExamResult
+                    {
+                        ExamId = exam.Id,
+                        StudentProfileId = enrolment.StudentProfileId,
+                        Score = enrolment.StudentProfileId % 2 == 0 ? 85 : 72,
+                        Grade = enrolment.StudentProfileId % 2 == 0 ? "A" : "B"
+                    });
+                }
+
+                // Seed an Assignment
+                var assignment = new Assignment
+                {
+                    CourseId = course.Id,
+                    Title = "First Project",
+                    MaxScore = 50,
+                    DueDate = DateTime.Now.AddDays(-10)
+                };
+                context.Assignments.Add(assignment);
+                await context.SaveChangesAsync();
+
+                // Seed Assignment Results
+                foreach (var enrolment in enrolments)
+                {
+                    context.AssignmentResults.Add(new AssignmentResult
+                    {
+                        AssignmentId = assignment.Id,
+                        StudentProfileId = enrolment.StudentProfileId,
+                        Score = 42,
+                        Feedback = "Good work, keep it up!"
+                    });
+                }
             }
 
             await context.SaveChangesAsync();

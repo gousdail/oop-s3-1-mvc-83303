@@ -17,25 +17,25 @@ namespace oop_s3_1_mvc_83303.Controllers
             if (IsAdmin)
             {
                 return View(await _context.AttendanceRecords
-                    .Include(a => a.Enrolment).ThenInclude(e => e.Course)
-                    .Include(a => a.Enrolment).ThenInclude(e => e.Student)
+                    .Include(a => a.Enrolment).ThenInclude(e => e!.Course)
+                    .Include(a => a.Enrolment).ThenInclude(e => e!.Student)
                     .ToListAsync());
             }
             else if (IsFaculty)
             {
                 var facultyId = await GetFacultyProfileId();
                 return View(await _context.AttendanceRecords
-                    .Include(a => a.Enrolment).ThenInclude(e => e.Course)
-                    .Include(a => a.Enrolment).ThenInclude(e => e.Student)
-                    .Where(a => a.Enrolment!.Course!.FacultyProfileId == facultyId)
+                    .Include(a => a.Enrolment).ThenInclude(e => e!.Course)
+                    .Include(a => a.Enrolment).ThenInclude(e => e!.Student)
+                    .Where(a => a.Enrolment != null && a.Enrolment.Course != null && a.Enrolment.Course.FacultyProfileId == facultyId)
                     .ToListAsync());
             }
             else // Student
             {
                 var studentId = await GetStudentProfileId();
                 return View(await _context.AttendanceRecords
-                    .Include(a => a.Enrolment).ThenInclude(e => e.Course)
-                    .Where(a => a.Enrolment!.StudentProfileId == studentId)
+                    .Include(a => a.Enrolment).ThenInclude(e => e!.Course)
+                    .Where(a => a.Enrolment != null && a.Enrolment.StudentProfileId == studentId)
                     .ToListAsync());
             }
         }
@@ -45,8 +45,8 @@ namespace oop_s3_1_mvc_83303.Controllers
             if (id == null) return NotFound();
 
             var attendanceRecord = await _context.AttendanceRecords
-                .Include(a => a.Enrolment).ThenInclude(e => e.Course)
-                .Include(a => a.Enrolment).ThenInclude(e => e.Student)
+                .Include(a => a.Enrolment).ThenInclude(e => e!.Course)
+                .Include(a => a.Enrolment).ThenInclude(e => e!.Student)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (attendanceRecord == null) return NotFound();
@@ -54,12 +54,12 @@ namespace oop_s3_1_mvc_83303.Controllers
             if (IsStudent)
             {
                 var studentId = await GetStudentProfileId();
-                if (attendanceRecord.Enrolment!.StudentProfileId != studentId) return Forbid();
+                if (attendanceRecord.Enrolment != null && attendanceRecord.Enrolment.StudentProfileId != studentId) return Forbid();
             }
             else if (IsFaculty)
             {
                 var facultyId = await GetFacultyProfileId();
-                if (attendanceRecord.Enrolment!.Course!.FacultyProfileId != facultyId) return Forbid();
+                if (attendanceRecord.Enrolment != null && attendanceRecord.Enrolment.Course != null && attendanceRecord.Enrolment.Course.FacultyProfileId != facultyId) return Forbid();
             }
 
             return View(attendanceRecord);
