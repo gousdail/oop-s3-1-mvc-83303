@@ -9,6 +9,7 @@ using oop_s3_1_mvc_83303.Data;
 namespace oop_s3_1_mvc_83303.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

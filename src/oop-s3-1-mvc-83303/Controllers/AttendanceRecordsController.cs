@@ -54,12 +54,12 @@ namespace oop_s3_1_mvc_83303.Controllers
             if (IsStudent)
             {
                 var studentId = await GetStudentProfileId();
-                if (attendanceRecord.Enrolment != null && attendanceRecord.Enrolment.StudentProfileId != studentId) return Forbid();
+                if (attendanceRecord.Enrolment != null && attendanceRecord.Enrolment.StudentProfileId != studentId) return NotFound();
             }
             else if (IsFaculty)
             {
                 var facultyId = await GetFacultyProfileId();
-                if (attendanceRecord.Enrolment != null && attendanceRecord.Enrolment.Course != null && attendanceRecord.Enrolment.Course.FacultyProfileId != facultyId) return Forbid();
+                if (attendanceRecord.Enrolment != null && attendanceRecord.Enrolment.Course != null && attendanceRecord.Enrolment.Course.FacultyProfileId != facultyId) return NotFound();
             }
 
             return View(attendanceRecord);

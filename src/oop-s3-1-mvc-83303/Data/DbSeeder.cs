@@ -3,6 +3,7 @@ using oop_s3_1_mvc_83303.Models;
 
 namespace oop_s3_1_mvc_83303.Data
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public static class DbSeeder
     {
         public static async Task Seed(ApplicationDbContext context, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)

@@ -365,8 +365,8 @@ namespace oop_s3_1_mvc_83303.Tests
             SetupController(controller, "stud1", "Student");
 
             var result = await controller.Details(record.Id);
-            // Accept either Forbid or NotFound as per security best practices mentioned in instructions
-            Assert.True(result is ForbidResult || result is NotFoundResult);
+            // Security Best Practice: Return NotFound instead of Forbid to hide existence
+            Assert.IsType<NotFoundResult>(result);
         }
 
         [Fact]
@@ -608,6 +608,63 @@ namespace oop_s3_1_mvc_83303.Tests
             var scores = new List<double> { 10, 20, 30, 40 };
             var avg = _gradebookService.CalculateAverage(scores);
             Assert.Equal(25, avg);
+        }
+
+        // --- FINAL MARGIN TESTS ---
+
+        [Fact]
+        public async Task Courses_Index_ReturnsViewWithCourses()
+        {
+            var db = GetContext();
+            var branch = new Branch { Name = "B1", Address = "A1" };
+            db.Branches.Add(branch);
+            await db.SaveChangesAsync();
+            db.Courses.Add(new Course { Name = "C1", BranchId = branch.Id, StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(1) });
+            await db.SaveChangesAsync();
+
+            var controller = new CoursesController(db, GetMockUserManager().Object);
+            SetupController(controller, "admin1", "Admin");
+
+            var result = await controller.Index();
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<IEnumerable<Course>>(viewResult.ViewData.Model);
+            Assert.NotEmpty(model);
+        }
+
+        [Fact]
+        public async Task Courses_Details_ValidId_ReturnsView()
+        {
+            var db = GetContext();
+            var branch = new Branch { Name = "B1", Address = "A1" };
+            db.Branches.Add(branch);
+            await db.SaveChangesAsync();
+            var course = new Course { Name = "C1", BranchId = branch.Id, StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(1) };
+            db.Courses.Add(course);
+            await db.SaveChangesAsync();
+
+            var controller = new CoursesController(db, GetMockUserManager().Object);
+            SetupController(controller, "admin1", "Admin");
+
+            var result = await controller.Details(course.Id);
+            Assert.IsType<ViewResult>(result);
+        }
+
+        [Fact]
+        public void Home_Privacy_ReturnsView()
+        {
+            var controller = new HomeController(null!);
+            var result = controller.Privacy();
+            Assert.IsType<ViewResult>(result);
+        }
+
+        [Fact]
+        public void Assignment_Title_IsRequired()
+        {
+            var assignment = new Assignment { Title = null! };
+            var context = new System.ComponentModel.DataAnnotations.ValidationContext(assignment);
+            var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+            var isValid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(assignment, context, results, true);
+            Assert.False(isValid);
         }
     }
 }
