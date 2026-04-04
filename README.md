@@ -1,44 +1,56 @@
-# Acme Global College - Management System
+# OOP Assessment #3 - MVC College Management System
 
-## Project Overview
-This is a .NET 8 ASP.NET Core MVC application for managing courses, students, faculty, and academic results across multiple branches.
+This project is an ASP.NET Core MVC application for managing a college system, including students, faculty, branches, courses, exams, and attendance.
+
+## Project Information
+- **Framework:** .NET 8.0
+- **Database:** SQL Server (Entity Framework Core)
+- **Branch:** `master`
 
 ## Features
-- **RBAC Security**: 3 roles (Admin, Faculty, Student).
-- **Academic Tracking**: Attendance, Gradebook (Assignments/Exams).
-- **Visibility Rules**: Students cannot see provisional exam results.
-- **Seeded Data**: Automatic database creation and seeding.
-
-## Setup Instructions
-To get the project running locally:
-
-1.  **Restore Packages**:
-    ```bash
-    dotnet restore
-    ```
-2.  **Update Database**:
-    Ensures the local SQL Server database is created and up to date with migrations.
-    ```bash
-    dotnet ef database update
-    ```
-3.  **Run Application**:
-    ```bash
-    dotnet run
-    ```
+- **Identity Management:** Role-based access control (Admin, Faculty, Student).
+- **Gradebook:** Complex grade calculations and average tracking.
+- **Attendance:** Faculty can record and track student attendance.
+- **Exams & Assignments:** Management of assessments and results.
+- **Security:** Strict data visibility rules based on user roles.
 
 ## Test Credentials
-The database is automatically seeded with the following accounts:
+The database is automatically seeded with the following accounts for testing:
 
 | Role | Email | Password |
 |------|-------|----------|
 | **Admin** | `admin@college.com` | `Admin123!` |
 | **Faculty** | `faculty@college.com` | `Faculty123!` |
-| **Student** | `student1@college.com` | `Student123!` |
-| **Student** | `student2@college.com` | `Student123!` |
+| **Student 1** | `student1@college.com` | `Student123!` |
+| **Student 2** | `student2@college.com` | `Student123!` |
 
-## Running Tests
-To verify the business logic and security rules:
+## Development & Testing
+
+### Running the Application
+```bash
+dotnet run --project src/oop-s3-1-mvc-83303/oop-s3-1-mvc-83303.csproj
+```
+
+### Running Tests
+To run all unit tests:
 ```bash
 dotnet test
 ```
-The test suite includes 10 robust tests covering GPA calculations, grade visibility rules, and access restrictions.
+
+### Code Coverage Report
+The project is configured with GitHub Actions to generate a coverage report using `reportgenerator`.
+To generate the report locally:
+1. Install the tool: `dotnet tool install --global dotnet-reportgenerator-globaltool`
+2. Run tests with coverage: `dotnet test --collect:"XPlat Code Coverage"`
+3. Generate HTML: `reportgenerator -reports:"TestResults/**/coverage.cobertura.xml" -targetdir:"coveragereport" -reporttypes:Html`
+4. Open `coveragereport/index.html` in your browser.
+
+## CI/CD
+The project uses GitHub Actions (`.github/workflows/ci.yml`) to:
+1. Build and test the application on every push to `master`.
+2. Generate a code coverage report.
+3. Automatically deploy the coverage report to **GitHub Pages**.
+
+## Key Design Decisions
+- **Model Property:** `Exam.Name` has been renamed to `Exam.Title` for clarity and consistency.
+- **Coverage:** Migration files and `Program.cs` are excluded from coverage to focus on business logic metrics.
