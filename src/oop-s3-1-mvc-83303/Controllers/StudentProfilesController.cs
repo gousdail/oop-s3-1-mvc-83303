@@ -63,6 +63,88 @@ namespace oop_s3_1_mvc_83303.Controllers
             return View(student);
         }
 
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var studentProfile = await _context.StudentProfiles.FindAsync(id);
+            if (studentProfile == null) return NotFound();
+
+            // Security Check: Student can only edit own profile. Admin can edit any. Faculty cannot edit.
+            if (IsStudent)
+            {
+                var studentId = await GetStudentProfileId();
+                if (studentProfile.Id != studentId) return Forbid();
+            }
+            else if (!IsAdmin)
+            {
+                return Forbid();
+            }
+
+            return View(studentProfile);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, StudentProfile studentProfile)
+        {
+            if (id != studentProfile.Id) return NotFound();
+
+            // Security Check
+            if (IsStudent)
+            {
+                var studentId = await GetStudentProfileId();
+                if (studentProfile.Id != studentId) return Forbid();
+            }
+            else if (!IsAdmin)
+            {
+                return Forbid();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(studentProfile);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!_context.StudentProfiles.Any(e => e.Id == studentProfile.Id)) return NotFound();
+                    else throw;
+                }
+                return RedirectToAction(nameof(Index));
+            }
+            return View(studentProfile);
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var studentProfile = await _context.StudentProfiles
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (studentProfile == null) return NotFound();
+
+            return View(studentProfile);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var studentProfile = await _context.StudentProfiles.FindAsync(id);
+            if (studentProfile != null)
+            {
+                _context.StudentProfiles.Remove(studentProfile);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
         // Add Create/Edit/Delete restricted to Admin only
         [Authorize(Roles = "Admin")]
         public IActionResult Create() => View();

@@ -8,6 +8,7 @@ using oop_s3_1_mvc_83303.Data;
 using oop_s3_1_mvc_83303.Models;
 using oop_s3_1_mvc_83303.Services;
 using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
 using Xunit;
 
 namespace oop_s3_1_mvc_83303.Tests
@@ -665,6 +666,188 @@ namespace oop_s3_1_mvc_83303.Tests
             var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
             var isValid = System.ComponentModel.DataAnnotations.Validator.TryValidateObject(assignment, context, results, true);
             Assert.False(isValid);
+        }
+
+        // --- VALIDATION TESTS (New) ---
+
+        [Fact]
+        public void StudentProfile_AgeUnder18_IsInvalid()
+        {
+            var student = new StudentProfile
+            {
+                Name = "John",
+                Email = "john@test.com",
+                Phone = "123",
+                Address = "Street",
+                StudentNumber = "S123",
+                DOB = DateTime.Now.AddYears(-17) // Under 18
+            };
+
+            var context = new ValidationContext(student);
+            var results = new List<ValidationResult>();
+            var isValid = Validator.TryValidateObject(student, context, results, true);
+
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.ErrorMessage!.Contains("at least 18"));
+        }
+
+        [Fact]
+        public void StudentProfile_ValidAgeAndFormat_IsValid()
+        {
+            var student = new StudentProfile
+            {
+                Name = "John",
+                Email = "john@test.com",
+                Phone = "123",
+                Address = "Street",
+                StudentNumber = "S123",
+                DOB = DateTime.Now.AddYears(-20) // Over 18
+            };
+
+            var context = new ValidationContext(student);
+            var results = new List<ValidationResult>();
+            var isValid = Validator.TryValidateObject(student, context, results, true);
+
+            Assert.True(isValid);
+        }
+
+        [Fact]
+        public void StudentProfile_StudentNumberMissingS_IsInvalid()
+        {
+            var student = new StudentProfile
+            {
+                Name = "John",
+                Email = "john@test.com",
+                Phone = "123",
+                Address = "Street",
+                StudentNumber = "123", // Missing 'S'
+                DOB = DateTime.Now.AddYears(-20)
+            };
+
+            var context = new ValidationContext(student);
+            var results = new List<ValidationResult>();
+            var isValid = Validator.TryValidateObject(student, context, results, true);
+
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.ErrorMessage!.Contains("start with 'S'"));
+        }
+
+        // --- REINFORCED SECURITY TESTS (New) ---
+
+        [Fact]
+        public async Task StudentProfiles_Edit_Student_OtherProfile_ReturnsForbid()
+        {
+            var db = GetContext();
+            var stud1 = new StudentProfile { IdentityUserId = "stud1", Name = "S1", Email = "s1@s.com", Phone = "1", Address = "A", StudentNumber = "S1", DOB = DateTime.Now.AddYears(-20) };
+            var stud2 = new StudentProfile { IdentityUserId = "stud2", Name = "S2", Email = "s2@s.com", Phone = "2", Address = "B", StudentNumber = "S2", DOB = DateTime.Now.AddYears(-20) };
+            db.StudentProfiles.AddRange(stud1, stud2);
+            await db.SaveChangesAsync();
+
+            var mockUserManager = GetMockUserManager();
+            mockUserManager.Setup(m => m.GetUserId(It.IsAny<ClaimsPrincipal>())).Returns("stud1");
+
+            var controller = new StudentProfilesController(db, mockUserManager.Object);
+            SetupController(controller, "stud1", "Student");
+
+            var result = await controller.Edit(stud2.Id);
+            Assert.IsType<ForbidResult>(result);
+        }
+
+        [Fact]
+        public async Task ExamResults_Index_Student_DoesNotShowUnreleased()
+        {
+            var db = GetContext();
+            var student = new StudentProfile { IdentityUserId = "stud1", Name = "S1", Email = "e", Phone = "p", Address = "a", StudentNumber = "S1", DOB = DateTime.Now.AddYears(-20) };
+            db.StudentProfiles.Add(student);
+            
+            var course = new Course { Name = "C1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(1) };
+            db.Courses.Add(course);
+            await db.SaveChangesAsync();
+
+            var releasedExam = new Exam { CourseId = course.Id, Title = "Released", ResultsReleased = true };
+            var provisionalExam = new Exam { CourseId = course.Id, Title = "Provisional", ResultsReleased = false };
+            db.Exams.AddRange(releasedExam, provisionalExam);
+            await db.SaveChangesAsync();
+
+            db.ExamResults.Add(new ExamResult { StudentProfileId = student.Id, ExamId = releasedExam.Id, Score = 80 });
+            db.ExamResults.Add(new ExamResult { StudentProfileId = student.Id, ExamId = provisionalExam.Id, Score = 90 });
+            await db.SaveChangesAsync();
+
+            var mockUserManager = GetMockUserManager();
+            mockUserManager.Setup(m => m.GetUserId(It.IsAny<ClaimsPrincipal>())).Returns("stud1");
+
+            var controller = new ExamResultsController(db, mockUserManager.Object);
+            SetupController(controller, "stud1", "Student");
+
+            var result = await controller.Index();
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<IEnumerable<ExamResult>>(viewResult.Model);
+
+            Assert.Single(model);
+            Assert.Equal("Released", model.First().Exam!.Title);
+        }
+
+        [Fact]
+        public async Task Gradebook_Index_Faculty_ForbiddenIfOtherCourse()
+        {
+            var db = GetContext();
+            db.FacultyProfiles.Add(new FacultyProfile { IdentityUserId = "fac1" });
+            db.FacultyProfiles.Add(new FacultyProfile { IdentityUserId = "fac2" });
+            await db.SaveChangesAsync();
+
+            var course = new Course { Name = "Other Course", FacultyProfileId = 2, StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(1) };
+            db.Courses.Add(course);
+            await db.SaveChangesAsync();
+
+            var mockUserManager = GetMockUserManager();
+            mockUserManager.Setup(m => m.GetUserId(It.IsAny<ClaimsPrincipal>())).Returns("fac1"); // Faculty 1
+
+            var controller = new GradebookController(db, mockUserManager.Object);
+            SetupController(controller, "fac1", "Faculty");
+
+            var result = await controller.Index(course.Id);
+            Assert.IsType<ForbidResult>(result);
+        }
+
+        [Fact]
+        public void GradebookService_Average_HandlesDecimalsCorrectly()
+        {
+            var scores = new List<double> { 85.5, 90.5 };
+            var result = _gradebookService.CalculateAverage(scores);
+            Assert.Equal(88, result);
+        }
+
+        [Fact]
+        public async Task StudentProfiles_Index_Faculty_OnlyEnrolledStudents()
+        {
+            var db = GetContext();
+            var fac1 = new FacultyProfile { IdentityUserId = "fac1" };
+            db.FacultyProfiles.Add(fac1);
+            
+            var s1 = new StudentProfile { Name = "Enrolled", StudentNumber = "S1", Email = "s1@s.com", Phone = "1", Address = "A", IdentityUserId = "u1", DOB = DateTime.Now.AddYears(-20) };
+            var s2 = new StudentProfile { Name = "Not Enrolled", StudentNumber = "S2", Email = "s2@s.com", Phone = "2", Address = "B", IdentityUserId = "u2", DOB = DateTime.Now.AddYears(-20) };
+            db.StudentProfiles.AddRange(s1, s2);
+            await db.SaveChangesAsync();
+
+            var c1 = new Course { FacultyProfileId = fac1.Id, Name = "C1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(1) };
+            db.Courses.Add(c1);
+            await db.SaveChangesAsync();
+
+            db.CourseEnrolments.Add(new CourseEnrolment { CourseId = c1.Id, StudentProfileId = s1.Id, EnrolDate = DateTime.Now, Status = "Active" });
+            await db.SaveChangesAsync();
+
+            var mockUserManager = GetMockUserManager();
+            mockUserManager.Setup(m => m.GetUserId(It.IsAny<ClaimsPrincipal>())).Returns("fac1");
+
+            var controller = new StudentProfilesController(db, mockUserManager.Object);
+            SetupController(controller, "fac1", "Faculty");
+
+            var result = await controller.Index();
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<IEnumerable<StudentProfile>>(viewResult.Model);
+
+            Assert.Single(model);
+            Assert.Equal(s1.Id, model.First().Id);
         }
     }
 }

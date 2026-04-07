@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using oop_s3_1_mvc_83303.Models;
 
 namespace oop_s3_1_mvc_83303.Data
@@ -8,7 +9,7 @@ namespace oop_s3_1_mvc_83303.Data
     {
         public static async Task Seed(ApplicationDbContext context, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
         {
-            context.Database.EnsureCreated();
+            context.Database.Migrate();
 
             // Seed Roles
             string[] roles = { "Admin", "Faculty", "Student" };
@@ -30,25 +31,31 @@ namespace oop_s3_1_mvc_83303.Data
             }
 
             // Seed Faculty
-            var facultyEmail = "faculty@college.com";
-            if (await userManager.FindByEmailAsync(facultyEmail) == null)
+            var facultyEmails = new[] { "faculty1@college.com", "faculty2@college.com" };
+            var facultyNames = new[] { "Dr. John Doe", "Dr. Jane Smith" };
+            for (int i = 0; i < facultyEmails.Length; i++)
             {
-                var facultyUser = new IdentityUser { UserName = facultyEmail, Email = facultyEmail, EmailConfirmed = true };
-                await userManager.CreateAsync(facultyUser, "Faculty123!");
-                await userManager.AddToRoleAsync(facultyUser, "Faculty");
-
-                var facultyProfile = new FacultyProfile
+                var email = facultyEmails[i];
+                if (await userManager.FindByEmailAsync(email) == null)
                 {
-                    IdentityUserId = facultyUser.Id,
-                    Name = "Dr. John Doe",
-                    Email = facultyEmail,
-                    Phone = "123-456-7890"
-                };
-                context.FacultyProfiles.Add(facultyProfile);
+                    var user = new IdentityUser { UserName = email, Email = email, EmailConfirmed = true };
+                    await userManager.CreateAsync(user, "Faculty123!");
+                    await userManager.AddToRoleAsync(user, "Faculty");
+
+                    var profile = new FacultyProfile
+                    {
+                        IdentityUserId = user.Id,
+                        Name = facultyNames[i],
+                        Email = email,
+                        Phone = $"123-456-789{i}"
+                    };
+                    context.FacultyProfiles.Add(profile);
+                }
             }
+            await context.SaveChangesAsync();
 
             // Seed Students
-            for (int i = 1; i <= 2; i++)
+            for (int i = 1; i <= 3; i++)
             {
                 var studentEmail = $"student{i}@college.com";
                 if (await userManager.FindByEmailAsync(studentEmail) == null)
@@ -64,51 +71,64 @@ namespace oop_s3_1_mvc_83303.Data
                         Email = studentEmail,
                         Phone = $"000-000-000{i}",
                         Address = $"{i} College Street",
-                        DOB = DateTime.Now.AddYears(-20),
-                        StudentNumber = $"S0000{i}"
+                        DOB = DateTime.Now.AddYears(-20 - i),
+                        StudentNumber = $"S2026{i:D4}"
                     };
                     context.StudentProfiles.Add(studentProfile);
                 }
             }
+            await context.SaveChangesAsync();
 
-            // Seed Branch and Course if empty
+            // Seed Branches
             if (!context.Branches.Any())
             {
-                var branch = new Branch { Name = "Main Campus", Address = "123 Education Ave" };
-                context.Branches.Add(branch);
-                await context.SaveChangesAsync();
-
-                var faculty = context.FacultyProfiles.First();
-                var course = new Course 
-                { 
-                    Name = "Modern Programming", 
-                    BranchId = branch.Id, 
-                    FacultyProfileId = faculty.Id,
-                    StartDate = DateTime.Now.AddMonths(-1),
-                    EndDate = DateTime.Now.AddMonths(3)
+                var branches = new List<Branch>
+                {
+                    new Branch { Name = "Main Campus", Address = "123 Education Ave" },
+                    new Branch { Name = "Tech Wing", Address = "456 Innovation Blvd" },
+                    new Branch { Name = "Art District", Address = "789 Creative Lane" }
                 };
-                context.Courses.Add(course);
+                context.Branches.AddRange(branches);
+                await context.SaveChangesAsync();
+            }
+
+            // Seed Courses
+            if (!context.Courses.Any())
+            {
+                var branches = context.Branches.ToList();
+                var faculties = context.FacultyProfiles.ToList();
+
+                var courses = new List<Course>
+                {
+                    new Course { Name = "Advanced C#", BranchId = branches[0].Id, FacultyProfileId = faculties[0].Id, StartDate = DateTime.Now.AddMonths(-2), EndDate = DateTime.Now.AddMonths(2) },
+                    new Course { Name = "Database Systems", BranchId = branches[1].Id, FacultyProfileId = faculties[1].Id, StartDate = DateTime.Now.AddMonths(-1), EndDate = DateTime.Now.AddMonths(3) },
+                    new Course { Name = "Web Development", BranchId = branches[0].Id, FacultyProfileId = faculties[0].Id, StartDate = DateTime.Now.AddMonths(-3), EndDate = DateTime.Now.AddMonths(1) }
+                };
+                context.Courses.AddRange(courses);
                 await context.SaveChangesAsync();
 
                 // Seed Enrolments
                 var students = context.StudentProfiles.ToList();
-                var enrolments = new List<CourseEnrolment>();
-                foreach (var student in students)
+                foreach (var course in courses)
                 {
-                    var enrolment = new CourseEnrolment
+                    foreach (var student in students)
                     {
-                        CourseId = course.Id,
-                        StudentProfileId = student.Id,
-                        EnrolDate = DateTime.Now.AddMonths(-1),
-                        Status = "Active"
-                    };
-                    enrolments.Add(enrolment);
-                    context.CourseEnrolments.Add(enrolment);
+                        var enrolment = new CourseEnrolment
+                        {
+                            CourseId = course.Id,
+                            StudentProfileId = student.Id,
+                            EnrolDate = DateTime.Now.AddMonths(-1),
+                            Status = "Active"
+                        };
+                        context.CourseEnrolments.Add(enrolment);
+                    }
                 }
                 await context.SaveChangesAsync();
 
-                // Seed Attendance for 4 weeks
-                foreach (var enrolment in enrolments)
+                var allEnrolments = context.CourseEnrolments.ToList();
+
+                // Seed Attendance for each student in each course
+                foreach (var enrolment in allEnrolments)
                 {
                     for (int w = 1; w <= 4; w++)
                     {
@@ -117,56 +137,50 @@ namespace oop_s3_1_mvc_83303.Data
                             CourseEnrolmentId = enrolment.Id,
                             WeekNumber = w,
                             Date = DateTime.Now.AddDays(-7 * (4 - w)),
-                            IsPresent = (w % 4 != 0) // Present for weeks 1,2,3, absent for week 4
+                            IsPresent = true
                         });
                     }
                 }
 
-                // Seed an Exam
-                var exam = new Exam
+                // Seed Exams and Results
+                foreach (var course in courses)
                 {
-                    CourseId = course.Id,
-                    Title = "Midterm Exam",
-                    Date = DateTime.Now.AddDays(-5),
-                    MaxScore = 100,
-                    ResultsReleased = true
-                };
-                context.Exams.Add(exam);
-                await context.SaveChangesAsync();
-
-                // Seed Exam Results
-                foreach (var enrolment in enrolments)
-                {
-                    context.ExamResults.Add(new ExamResult
+                    var examReleased = new Exam
                     {
-                        ExamId = exam.Id,
-                        StudentProfileId = enrolment.StudentProfileId,
-                        Score = enrolment.StudentProfileId % 2 == 0 ? 85 : 72,
-                        Grade = enrolment.StudentProfileId % 2 == 0 ? "A" : "B"
-                    });
-                }
-
-                // Seed an Assignment
-                var assignment = new Assignment
-                {
-                    CourseId = course.Id,
-                    Title = "First Project",
-                    MaxScore = 50,
-                    DueDate = DateTime.Now.AddDays(-10)
-                };
-                context.Assignments.Add(assignment);
-                await context.SaveChangesAsync();
-
-                // Seed Assignment Results
-                foreach (var enrolment in enrolments)
-                {
-                    context.AssignmentResults.Add(new AssignmentResult
+                        CourseId = course.Id,
+                        Title = "Midterm - Released",
+                        Date = DateTime.Now.AddDays(-10),
+                        MaxScore = 100,
+                        ResultsReleased = true
+                    };
+                    var examProvisional = new Exam
                     {
-                        AssignmentId = assignment.Id,
-                        StudentProfileId = enrolment.StudentProfileId,
-                        Score = 42,
-                        Feedback = "Good work, keep it up!"
-                    });
+                        CourseId = course.Id,
+                        Title = "Final - Provisional",
+                        Date = DateTime.Now.AddDays(-2),
+                        MaxScore = 100,
+                        ResultsReleased = false
+                    };
+                    context.Exams.AddRange(examReleased, examProvisional);
+                    await context.SaveChangesAsync();
+
+                    foreach (var student in students)
+                    {
+                        context.ExamResults.Add(new ExamResult
+                        {
+                            ExamId = examReleased.Id,
+                            StudentProfileId = student.Id,
+                            Score = 75 + student.Id,
+                            Grade = "B"
+                        });
+                        context.ExamResults.Add(new ExamResult
+                        {
+                            ExamId = examProvisional.Id,
+                            StudentProfileId = student.Id,
+                            Score = 80 + student.Id,
+                            Grade = "A"
+                        });
+                    }
                 }
             }
 

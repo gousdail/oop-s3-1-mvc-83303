@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace oop_s3_1_mvc_83303.Models
 {
-    public class StudentProfile
+    public class StudentProfile : IValidatableObject
     {
         public int Id { get; set; }
         public string IdentityUserId { get; set; } = string.Empty;
@@ -30,5 +30,18 @@ namespace oop_s3_1_mvc_83303.Models
         public virtual ICollection<ExamResult> ExamResults { get; set; } = new List<ExamResult>();
 
         public virtual ICollection<AssignmentResult> AssignmentResults { get; set; } = new List<AssignmentResult>();
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (DOB > DateTime.Now.AddYears(-18))
+            {
+                yield return new ValidationResult("Student must be at least 18 years old.", new[] { nameof(DOB) });
+            }
+
+            if (string.IsNullOrWhiteSpace(StudentNumber) || !StudentNumber.StartsWith("S"))
+            {
+                yield return new ValidationResult("Student number must start with 'S'.", new[] { nameof(StudentNumber) });
+            }
+        }
     }
 }
