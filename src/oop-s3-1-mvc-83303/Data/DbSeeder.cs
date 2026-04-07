@@ -31,8 +31,8 @@ namespace oop_s3_1_mvc_83303.Data
             }
 
             // Seed Faculty
-            var facultyEmails = new[] { "faculty1@college.com", "faculty2@college.com" };
-            var facultyNames = new[] { "Dr. John Doe", "Dr. Jane Smith" };
+            var facultyEmails = new[] { "dublin_dean@ireland_college.com", "cork_dean@ireland_college.com", "galway_dean@ireland_college.com" };
+            var facultyNames = new[] { "Dr. Liam O'Connor", "Dr. Aoife Murphy", "Dr. Seamus Byrne" };
             for (int i = 0; i < facultyEmails.Length; i++)
             {
                 var email = facultyEmails[i];
@@ -47,7 +47,7 @@ namespace oop_s3_1_mvc_83303.Data
                         IdentityUserId = user.Id,
                         Name = facultyNames[i],
                         Email = email,
-                        Phone = $"123-456-789{i}"
+                        Phone = $"087-{i:D3}-1234"
                     };
                     context.FacultyProfiles.Add(profile);
                 }
@@ -55,9 +55,9 @@ namespace oop_s3_1_mvc_83303.Data
             await context.SaveChangesAsync();
 
             // Seed Students
-            for (int i = 1; i <= 3; i++)
+            for (int i = 1; i <= 5; i++)
             {
-                var studentEmail = $"student{i}@college.com";
+                var studentEmail = $"student{i}@ireland_college.com";
                 if (await userManager.FindByEmailAsync(studentEmail) == null)
                 {
                     var studentUser = new IdentityUser { UserName = studentEmail, Email = studentEmail, EmailConfirmed = true };
@@ -69,8 +69,8 @@ namespace oop_s3_1_mvc_83303.Data
                         IdentityUserId = studentUser.Id,
                         Name = $"Student {i}",
                         Email = studentEmail,
-                        Phone = $"000-000-000{i}",
-                        Address = $"{i} College Street",
+                        Phone = $"089-000-000{i}",
+                        Address = $"{i} St. Patrick Street",
                         DOB = DateTime.Now.AddYears(-20 - i),
                         StudentNumber = $"S2026{i:D4}"
                     };
@@ -79,31 +79,38 @@ namespace oop_s3_1_mvc_83303.Data
             }
             await context.SaveChangesAsync();
 
-            // Seed Branches
+            // Seed 3 Irish Branches
             if (!context.Branches.Any())
             {
                 var branches = new List<Branch>
                 {
-                    new Branch { Name = "Main Campus", Address = "123 Education Ave" },
-                    new Branch { Name = "Tech Wing", Address = "456 Innovation Blvd" },
-                    new Branch { Name = "Art District", Address = "789 Creative Lane" }
+                    new Branch { Name = "Dublin Campus", Address = "O'Connell St, Dublin 1, Ireland" },
+                    new Branch { Name = "Cork Campus", Address = "Grand Parade, Cork, Ireland" },
+                    new Branch { Name = "Galway Campus", Address = "Eyre Square, Galway, Ireland" }
                 };
                 context.Branches.AddRange(branches);
                 await context.SaveChangesAsync();
             }
 
-            // Seed Courses
+            // Seed Courses - At least 2 per branch with different teachers
             if (!context.Courses.Any())
             {
                 var branches = context.Branches.ToList();
                 var faculties = context.FacultyProfiles.ToList();
 
-                var courses = new List<Course>
-                {
-                    new Course { Name = "Advanced C#", BranchId = branches[0].Id, FacultyProfileId = faculties[0].Id, StartDate = DateTime.Now.AddMonths(-2), EndDate = DateTime.Now.AddMonths(2) },
-                    new Course { Name = "Database Systems", BranchId = branches[1].Id, FacultyProfileId = faculties[1].Id, StartDate = DateTime.Now.AddMonths(-1), EndDate = DateTime.Now.AddMonths(3) },
-                    new Course { Name = "Web Development", BranchId = branches[0].Id, FacultyProfileId = faculties[0].Id, StartDate = DateTime.Now.AddMonths(-3), EndDate = DateTime.Now.AddMonths(1) }
-                };
+                var courses = new List<Course>();
+                // Dublin (branches[0])
+                courses.Add(new Course { Name = "Irish Law Foundations", BranchId = branches[0].Id, FacultyProfileId = faculties[0].Id, StartDate = DateTime.Now.AddMonths(-2), EndDate = DateTime.Now.AddMonths(2) });
+                courses.Add(new Course { Name = "Digital Marketing", BranchId = branches[0].Id, FacultyProfileId = faculties[1].Id, StartDate = DateTime.Now.AddMonths(-2), EndDate = DateTime.Now.AddMonths(2) });
+                
+                // Cork (branches[1])
+                courses.Add(new Course { Name = "Marine Biology", BranchId = branches[1].Id, FacultyProfileId = faculties[1].Id, StartDate = DateTime.Now.AddMonths(-1), EndDate = DateTime.Now.AddMonths(3) });
+                courses.Add(new Course { Name = "Food Science", BranchId = branches[1].Id, FacultyProfileId = faculties[2].Id, StartDate = DateTime.Now.AddMonths(-1), EndDate = DateTime.Now.AddMonths(3) });
+
+                // Galway (branches[2])
+                courses.Add(new Course { Name = "Traditional Music", BranchId = branches[2].Id, FacultyProfileId = faculties[2].Id, StartDate = DateTime.Now.AddMonths(-3), EndDate = DateTime.Now.AddMonths(1) });
+                courses.Add(new Course { Name = "Hydraulic Engineering", BranchId = branches[2].Id, FacultyProfileId = faculties[0].Id, StartDate = DateTime.Now.AddMonths(-3), EndDate = DateTime.Now.AddMonths(1) });
+
                 context.Courses.AddRange(courses);
                 await context.SaveChangesAsync();
 
@@ -111,7 +118,9 @@ namespace oop_s3_1_mvc_83303.Data
                 var students = context.StudentProfiles.ToList();
                 foreach (var course in courses)
                 {
-                    foreach (var student in students)
+                    // Enroll 3 random students in each course
+                    var courseStudents = students.OrderBy(x => Guid.NewGuid()).Take(3).ToList();
+                    foreach (var student in courseStudents)
                     {
                         var enrolment = new CourseEnrolment
                         {
@@ -127,7 +136,7 @@ namespace oop_s3_1_mvc_83303.Data
 
                 var allEnrolments = context.CourseEnrolments.ToList();
 
-                // Seed Attendance for each student in each course
+                // Seed Attendance for each student in each course - 4 weeks
                 foreach (var enrolment in allEnrolments)
                 {
                     for (int w = 1; w <= 4; w++)
@@ -164,20 +173,21 @@ namespace oop_s3_1_mvc_83303.Data
                     context.Exams.AddRange(examReleased, examProvisional);
                     await context.SaveChangesAsync();
 
-                    foreach (var student in students)
+                    var courseEnrolments = context.CourseEnrolments.Where(e => e.CourseId == course.Id).ToList();
+                    foreach (var enrolment in courseEnrolments)
                     {
                         context.ExamResults.Add(new ExamResult
                         {
                             ExamId = examReleased.Id,
-                            StudentProfileId = student.Id,
-                            Score = 75 + student.Id,
+                            StudentProfileId = enrolment.StudentProfileId,
+                            Score = 75 + (enrolment.Id % 10),
                             Grade = "B"
                         });
                         context.ExamResults.Add(new ExamResult
                         {
                             ExamId = examProvisional.Id,
-                            StudentProfileId = student.Id,
-                            Score = 80 + student.Id,
+                            StudentProfileId = enrolment.StudentProfileId,
+                            Score = 80 + (enrolment.Id % 10),
                             Grade = "A"
                         });
                     }

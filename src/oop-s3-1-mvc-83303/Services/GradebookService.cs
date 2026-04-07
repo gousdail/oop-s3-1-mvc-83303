@@ -17,7 +17,7 @@ namespace oop_s3_1_mvc_83303.Services
 
         public string GetGrade(double score, double maxScore)
         {
-            var percentage = (score / maxScore) * 100;
+            var percentage = Math.Round((score / maxScore) * 100);
             if (percentage >= 70) return "A";
             if (percentage >= 60) return "B";
             if (percentage >= 50) return "C";
@@ -28,6 +28,11 @@ namespace oop_s3_1_mvc_83303.Services
         public bool CanFacultyAccessCourse(int facultyId, Course course)
         {
             return course.FacultyProfileId == facultyId;
+        }
+
+        public bool IsStudentEnrolled(int studentId, int courseId, IEnumerable<CourseEnrolment> enrolments)
+        {
+            return enrolments.Any(e => e.StudentProfileId == studentId && e.CourseId == courseId);
         }
     }
 }
