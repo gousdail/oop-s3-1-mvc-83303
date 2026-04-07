@@ -20,11 +20,11 @@ The database is automatically seeded with the following accounts for testing:
 | Role | Email | Password |
 |------|-------|----------|
 | **Admin** | `admin@college.com` | `Admin123!` |
-| **Faculty (Dublin)** | `dublin_dean@ireland_college.com` | `Faculty123!` |
-| **Faculty (Cork)** | `cork_dean@ireland_college.com` | `Faculty123!` |
-| **Faculty (Galway)** | `galway_dean@ireland_college.com` | `Faculty123!` |
-| **Student 1** | `student1@ireland_college.com` | `Student123!` |
-| **Student 5** | `student5@ireland_college.com` | `Student123!` |
+| **Faculty (Dublin)** | `faculty1@college.com` | `Faculty123!` |
+| **Faculty (Cork)** | `faculty2@college.com` | `Faculty123!` |
+| **Faculty (Galway)** | `faculty3@college.com` | `Faculty123!` |
+| **Student 1** | `student1@college.com` | `Student123!` |
+| **Student 5** | `student5@college.com` | `Student123!` |
 
 ## Development & Testing
 

@@ -31,7 +31,7 @@ namespace oop_s3_1_mvc_83303.Data
             }
 
             // Seed Faculty
-            var facultyEmails = new[] { "dublin_dean@ireland_college.com", "cork_dean@ireland_college.com", "galway_dean@ireland_college.com" };
+            var facultyEmails = new[] { "faculty1@college.com", "faculty2@college.com", "faculty3@college.com" };
             var facultyNames = new[] { "Dr. Liam O'Connor", "Dr. Aoife Murphy", "Dr. Seamus Byrne" };
             for (int i = 0; i < facultyEmails.Length; i++)
             {
@@ -57,7 +57,7 @@ namespace oop_s3_1_mvc_83303.Data
             // Seed Students
             for (int i = 1; i <= 5; i++)
             {
-                var studentEmail = $"student{i}@ireland_college.com";
+                var studentEmail = $"student{i}@college.com";
                 if (await userManager.FindByEmailAsync(studentEmail) == null)
                 {
                     var studentUser = new IdentityUser { UserName = studentEmail, Email = studentEmail, EmailConfirmed = true };
