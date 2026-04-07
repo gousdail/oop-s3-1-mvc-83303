@@ -478,5 +478,111 @@ namespace oop_s3_1_mvc_83303.Tests
         }
 
         #endregion
+
+        #region Additional Coverage Tests
+
+        [Fact]
+        public void Branch_Name_Too_Short_Validation()
+        {
+            var branch = new Branch { Name = "Ab", Address = "Some Address" };
+            var context = new ValidationContext(branch);
+            var results = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(branch, context, results, true);
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.ErrorMessage != null && r.ErrorMessage.Contains("between 3 and 100 characters"));
+        }
+
+        [Fact]
+        public void Branch_Address_Required_Validation()
+        {
+            var branch = new Branch { Name = "Valid Name", Address = "" };
+            var context = new ValidationContext(branch);
+            var results = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(branch, context, results, true);
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.MemberNames.Contains("Address"));
+        }
+
+        [Fact]
+        public void FacultyProfile_Name_Required_Validation()
+        {
+            var faculty = new FacultyProfile { Name = "", Email = "test@test.com", Phone = "123456789", IdentityUserId = "id" };
+            var context = new ValidationContext(faculty);
+            var results = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(faculty, context, results, true);
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.MemberNames.Contains("Name"));
+        }
+
+        [Fact]
+        public void FacultyProfile_Email_Invalid_Validation()
+        {
+            var faculty = new FacultyProfile { Name = "Test", Email = "invalid-email", Phone = "123456789", IdentityUserId = "id" };
+            var context = new ValidationContext(faculty);
+            var results = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(faculty, context, results, true);
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.MemberNames.Contains("Email"));
+        }
+
+        [Fact]
+        public void Exam_Title_Required_Validation()
+        {
+            var exam = new Exam { Title = "", MaxScore = 100, Date = DateTime.Now };
+            var context = new ValidationContext(exam);
+            var results = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(exam, context, results, true);
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.MemberNames.Contains("Title"));
+        }
+
+        [Fact]
+        public void ExamResult_Score_Range_Validation()
+        {
+            var result = new ExamResult { Score = -1, Grade = "F", StudentProfileId = 1, ExamId = 1 };
+            var context = new ValidationContext(result);
+            var results = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(result, context, results, true);
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.ErrorMessage != null && r.ErrorMessage.Contains("Score must be positive"));
+        }
+
+        [Fact]
+        public void Assignment_Title_Required_Validation()
+        {
+            var assignment = new Assignment { Title = "" };
+            var context = new ValidationContext(assignment);
+            var results = new List<ValidationResult>();
+            bool isValid = Validator.TryValidateObject(assignment, context, results, true);
+            Assert.False(isValid);
+            Assert.Contains(results, r => r.MemberNames.Contains("Title"));
+        }
+
+        [Fact]
+        public void GradebookService_GetGrade_ExactlyBoundary_B()
+        {
+            var service = new GradebookService();
+            // 60% is exactly B
+            Assert.Equal("B", service.GetGrade(60, 100));
+        }
+
+        [Fact]
+        public void GradebookService_GetGrade_ExactlyBoundary_D()
+        {
+            var service = new GradebookService();
+            // 40% is exactly D
+            Assert.Equal("D", service.GetGrade(40, 100));
+        }
+
+        [Fact]
+        public void GradebookService_CalculateAverage_SingleScore_ReturnsCorrectAverage()
+        {
+            var service = new GradebookService();
+            var scores = new List<double> { 85 };
+            var result = service.CalculateAverage(scores);
+            Assert.Equal(85, result);
+        }
+
+        #endregion
     }
 }
